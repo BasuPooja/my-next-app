@@ -1,11 +1,20 @@
 "use client";
 import { useRouter } from "next/navigation";
+
 export default function LoginPage() {
 
-  const loginUser = async () => {
     const router = useRouter();
-    try{
-        const response = await fetch("http://127.0.0.1:8000/api/login", {
+
+    const loginUser = async () => {
+
+    try {
+        await fetch("http://127.0.0.1:8000/sanctum/csrf-cookie", {
+            method: "GET",
+            credentials: "include",
+        });
+
+  
+        const response = await fetch("http://127.0.0.1:8000/login", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -23,8 +32,6 @@ export default function LoginPage() {
         }
 
         alert("Login Successful ✅");
-        const data = await response.json();
-        localStorage.setItem("token", data.token);
         router.push("/products");
 
     } catch (error) {
