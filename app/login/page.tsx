@@ -14,7 +14,7 @@ export default function LoginPage() {
         });
 
   
-        const response = await fetch("http://127.0.0.1:8000/login", {
+        const response = await fetch("http://127.0.0.1:8000/api/login", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -32,6 +32,8 @@ export default function LoginPage() {
         }
 
         alert("Login Successful ✅");
+        const data = await response.json();
+        localStorage.setItem("token", data.token);
         router.push("/products");
 
     } catch (error) {
