@@ -1,19 +1,33 @@
 "use client";
 
-export default function TestPage() {
+export default function ProductPage() {
 
-  const connectLaravel = async () => {
-    const res = await fetch("http://127.0.0.1:8000/sanctum/csrf-cookie", {
-      method: "GET",
-      credentials: "include",
+  const showProduct = async () => {
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login first");
+      return;
+    }
+
+    const res = await fetch("http://127.0.0.1:8000/api/products/1", {
+      // method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
     });
 
-    console.log("Connected:", res.status);
+    const data = await res.json();
+    console.log(data);
+
+    alert("Check console for product details");
   };
 
   return (
-    <button onClick={connectLaravel}>
-      Connect Laravel
+    <button onClick={showProduct}>
+      Show Product
     </button>
   );
 }
