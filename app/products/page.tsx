@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getProducts } from "@/api/productApi";
+
 
 interface Product {
   id: number;
@@ -25,40 +27,29 @@ export default function ProductsPage() {
     setCartCount(cart.length);
   }, []);
 
-  const fetchProducts = async () => {
-    const token = localStorage.getItem("token");
+ const fetchProducts = async () => {
+  setLoading(true);
 
-    if (!token) {
-      router.push("/login");
-      return;
-    }
+  const token = localStorage.getItem("token");
 
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/products?page=${page}&search=${search}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
-      );
+  if (!token) {
+    router.push("/login");
+    return;
+  }
 
-      if (response.status === 401) {
-        router.push("/login");
-        return;
-      }
+  try {
+    const data = await getProducts(page, search);
 
-      const data = await response.json();
       setProducts(data.data);
       setLastPage(data.last_page);
-      setLoading(false);
 
     } catch (error) {
       console.error(error);
+    } finally {
       setLoading(false);
     }
-  };
+};
+
 
   useEffect(() => {
     fetchProducts();

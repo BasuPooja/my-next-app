@@ -1,6 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { registerApi } from "@/api/authApi";
+
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,29 +23,15 @@ export default function RegisterPage() {
 
   const registerUser = async (e: any) => {
     e.preventDefault();
+
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/register`,
-        {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(form),
-      });
-
-      if (!response.ok) {
-        alert("Registration Failed");
-        return;
-      }
-
+      await registerApi(form);
       alert("Registration Successful");
       router.push("/login");
 
     } catch (error) {
       console.error(error);
-      alert("Something went wrong");
+      alert("Registration Failed");
     }
   };
 

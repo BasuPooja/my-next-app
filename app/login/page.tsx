@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { loginApi } from "@/api/authApi";
 
 export default function LoginPage() {
 
@@ -19,34 +20,22 @@ export default function LoginPage() {
         });
     };
 
-    const loginUser = async (e: any) => {
-        e.preventDefault();
+   const loginUser = async (e: any) => {
+    e.preventDefault();
 
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-                body: JSON.stringify(form),
-            });
-            if (!response.ok) {
-                alert("Login Failed");
-                return;
-            }
-            const data = await response.json();
-            localStorage.setItem("token", data.token);
+    try {
+      const data = await loginApi(form);
 
-            alert("Login Successful");
-            router.push("/products");
+      localStorage.setItem("token", data.token);
+      alert("Login Successful");
+      router.push("/products");
 
-        } catch (error) {
-        console.error("Login error:", error);
-        alert("Something went wrong");
+    } catch (error) {
+      console.error(error);
+      alert("Login Failed");
     }
   };
+
 
   return (
     <div
