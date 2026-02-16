@@ -16,6 +16,8 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
 
   const fetchProducts = async () => {
     const token = localStorage.getItem("token");
@@ -27,7 +29,7 @@ export default function ProductsPage() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/products`,
+        `${process.env.NEXT_PUBLIC_API_URL}/products?page=${page}&search=${search}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -42,7 +44,8 @@ export default function ProductsPage() {
       }
 
       const data = await response.json();
-      setProducts(data);
+      setProducts(data.data);
+      setLastPage(data.last_page);
       setLoading(false);
 
     } catch (error) {
@@ -52,7 +55,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [page, search]);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -85,7 +88,10 @@ export default function ProductsPage() {
             placeholder="Search products..."
             className="px-4 py-2 border border-sky-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
           />
 
           <button
@@ -129,6 +135,28 @@ export default function ProductsPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="flex justify-center gap-4 pb-10">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+          className="bg-blue-800 text-white px-4 py-2 rounded disabled:opacity-40"
+        >
+          Previous
+        </button>
+
+        <span className="font-semibold text-blue-900">
+          Page {page} of {lastPage}
+        </span>
+
+        <button
+          disabled={page === lastPage}
+          onClick={() => setPage(page + 1)}
+          className="bg-blue-800 text-white px-4 py-2 rounded disabled:opacity-40"
+        >
+          Next
+        </button>
       </div>
 
     </div>
