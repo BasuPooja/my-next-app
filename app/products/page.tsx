@@ -18,6 +18,12 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    setCartCount(cart.length);
+  }, []);
 
   const fetchProducts = async () => {
     const token = localStorage.getItem("token");
@@ -50,6 +56,7 @@ export default function ProductsPage() {
 
     } catch (error) {
       console.error(error);
+      setLoading(false);
     }
   };
 
@@ -57,14 +64,18 @@ export default function ProductsPage() {
     fetchProducts();
   }, [page, search]);
 
+  const addToCart = (product: Product) => {
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    cart.push(product);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    setCartCount(cart.length);
+    alert("Added to cart");
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     router.push("/login");
   };
-
-  const filteredProducts = products.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase())
-  );
 
   if (loading) {
     return (
@@ -83,6 +94,14 @@ export default function ProductsPage() {
         </h1>
 
         <div className="flex items-center gap-4">
+          <div className="relative text-2xl cursor-pointer">
+            🛒
+            <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 rounded-full">
+              {cartCount}
+            </span>
+          </div>
+
+
           <input
             type="text"
             placeholder="Search products..."
@@ -105,7 +124,7 @@ export default function ProductsPage() {
 
       {/* PRODUCTS */}
       <div className="p-10 grid grid-cols-4 gap-8">
-        {filteredProducts.map((product) => (
+        {products.map((product) => (
           <div
             key={product.id}
             className="bg-white rounded-2xl shadow-lg p-5 hover:shadow-xl transition"
@@ -129,7 +148,9 @@ export default function ProductsPage() {
                 ₹ {product.price}
               </span>
 
-              <button className="bg-sky-500 text-white px-4 py-1 rounded-lg hover:bg-sky-600 transition">
+              <button 
+                onClick={() => addToCart(product)}
+                className="bg-sky-500 text-white px-4 py-1 rounded-lg hover:bg-sky-600 transition">
                 Add to Cart
               </button>
             </div>
