@@ -3,15 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getProducts } from "@/api/productApi";
+import { Product } from "@/types/product";
+import Image from "next/image";
 
-
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-}
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -69,6 +63,7 @@ export default function ProductsPage() {
   };
 
   if (loading) {
+
     return (
       <div className="flex items-center justify-center min-h-screen bg-sky-100">
         <h2 className="text-xl text-blue-900 font-semibold">Loading...</h2>
@@ -85,13 +80,21 @@ export default function ProductsPage() {
         </h1>
 
         <div className="flex items-center gap-4">
-          <div className="relative text-2xl cursor-pointer">
-            🛒
-            <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 rounded-full">
+          <div className="relative cursor-pointer">
+            <Image
+              src="/icons/cart.svg"
+              alt="cart"
+              width={28}
+              height={28}
+            />
+            {/* Added conditional rendering for cart badge to display only when cart count is greater than zero. */}
+            {cartCount > 0 && (
+            <span className="absolute -top-2 -right-3 min-w-[20px] h-5 flex items-center justify-center bg-red-500 text-white text-xs px-2 rounded-full">
               {cartCount}
             </span>
-          </div>
+          )}
 
+          </div>
 
           <input
             type="text"
@@ -113,7 +116,6 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* PRODUCTS */}
       <div className="p-10 grid grid-cols-4 gap-8">
         {products.map((product) => (
           <div

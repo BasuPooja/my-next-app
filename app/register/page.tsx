@@ -2,26 +2,27 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { registerApi } from "@/api/authApi";
+import { RegisterForm } from "@/types/auth"
 
 
 export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<RegisterForm>({
     name: "",
     email: "",
     password: "",
   });
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
     });
   };
 
-  const registerUser = async (e: any) => {
+  const registerUser = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
@@ -36,36 +37,15 @@ export default function RegisterPage() {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-        background: "#d7ddf3",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          padding: "40px",
-          borderRadius: "12px",
-          boxShadow: "0 6px 25px rgba(0,0,0,0.08)",
-          width: "320px",
-          textAlign: "center",
-        }}
-      >
-        <h2 style={{ marginBottom: "20px", fontWeight: "bold" }}>
+<div className="flex items-center justify-center min-h-screen bg-indigo-100">
+      <div className="bg-white p-10 rounded-2xl shadow-xl w-[380px] text-center">
+        <h2 className="text-2xl font-bold text-blue-900 mb-6">
           Create Account
         </h2>
 
         <form
           onSubmit={registerUser}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "14px",
-          }}
+          className="flex flex-col gap-4"
         >
           <input
             type="text"
@@ -74,7 +54,7 @@ export default function RegisterPage() {
             value={form.name}
             onChange={handleChange}
             required
-            style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc" }}
+            className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
 
           <input
@@ -84,8 +64,8 @@ export default function RegisterPage() {
             value={form.email}
             onChange={handleChange}
             required
-            style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc" }}
-          />
+            className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
 
            <div style={{ position: "relative" }}>
             <input
@@ -95,26 +75,12 @@ export default function RegisterPage() {
               value={form.password}
               onChange={handleChange}
               required
-              style={{
-                padding: "12px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-                width: "100%",
-              }}
+              className="border border-gray-300 p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
 
             <span
               onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: "absolute",
-                right: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                cursor: "pointer",
-                fontSize: "13px",
-                color: "#2563eb",
-                fontWeight: "bold",
-              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-sm text-blue-600 font-semibold"
             >
               {showPassword ? "Hide" : "Show"}
             </span>
@@ -122,35 +88,19 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            style={{
-              padding: "10px",
-              background: "#2563eb",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              marginTop: "5px",
-            }}
+             className="bg-blue-800 text-white py-3 rounded-lg font-semibold hover:bg-blue-900 transition"
           >
             Register
           </button>
         </form>
 
-        <p style={{ marginTop: "15px" }}>
+        <p className="mt-6 text-gray-600">
           Already registered?
         </p>
 
         <button
           onClick={() => router.push("/login")}
-          style={{
-            padding: "8px 12px",
-            background: "#24a024",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-          }}
+          className="mt-3 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
         >
           Login
         </button>
