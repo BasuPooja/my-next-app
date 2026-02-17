@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getProducts } from "@/api/productApi";
 import { Product } from "@/types/product";
 import Image from "next/image";
-
+import toast from "react-hot-toast";
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -54,7 +54,7 @@ export default function ProductsPage() {
     cart.push(product);
     localStorage.setItem("cart", JSON.stringify(cart));
     setCartCount(cart.length);
-    alert("Added to cart");
+    toast.success("Added to cart");
   };
 
   const logout = () => {
