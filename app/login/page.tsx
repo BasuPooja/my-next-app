@@ -3,6 +3,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { loginApi } from "@/api/authApi";
 import { LoginForm } from "@/types/auth";
+import toast from "react-hot-toast";
+
 
 export default function LoginPage() {
 
@@ -28,12 +30,12 @@ export default function LoginPage() {
       const data = await loginApi(form);
 
       localStorage.setItem("token", data.token);
-      alert("Login Successful");
+      toast.success("Login Successful");
       router.push("/products");
 
     } catch (error) {
       console.error(error);
-      alert("Login Failed");
+      toast.error("Login Failed");
     }
   };
 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getProducts } from "@/api/productApi";
 import { Product } from "@/types/product";
 import Image from "next/image";
-
+import toast from "react-hot-toast";
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -15,6 +15,14 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [cartCount, setCartCount] = useState(0);
+  const [sort, setSort] = useState("latest");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [appliedSort, setAppliedSort] = useState("latest");
+  const [appliedMinPrice, setAppliedMinPrice] = useState("");
+  const [appliedMaxPrice, setAppliedMaxPrice] = useState("");
+
 
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -32,7 +40,13 @@ export default function ProductsPage() {
   }
 
   try {
-    const data = await getProducts(page, search);
+    const data = await getProducts(
+      page, 
+      appliedSearch,
+      appliedSort,
+      appliedMinPrice,
+      appliedMaxPrice
+    );
 
       setProducts(data.data);
       setLastPage(data.last_page);
@@ -47,14 +61,14 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-  }, [page, search]);
+  }, [page, appliedSearch, appliedSort, appliedMinPrice, appliedMaxPrice]);
 
   const addToCart = (product: Product) => {
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
     cart.push(product);
     localStorage.setItem("cart", JSON.stringify(cart));
     setCartCount(cart.length);
-    alert("Added to cart");
+    toast.success("Added to cart");
   };
 
   const logout = () => {
@@ -95,18 +109,6 @@ export default function ProductsPage() {
           )}
 
           </div>
-
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="px-4 py-2 border border-sky-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-          />
-
           <button
             onClick={logout}
             className="bg-blue-800 text-white px-4 py-2 rounded-lg hover:bg-blue-900 transition"
@@ -116,6 +118,66 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {/* FILTER BAR */}
+      <div className="bg-white shadow-sm px-10 py-4 flex flex-wrap gap-4 items-center">
+
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={search}
+          onChange={(e) =>
+            setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setAppliedSearch(search);
+                setPage(1);
+              }
+          }}
+          className="px-4 py-2 border rounded-lg w-64"
+        />
+
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          className="px-4 py-2 border rounded-lg"
+        >
+          <option value="latest">Latest</option>
+          <option value="price_low">Price Low → High</option>
+          <option value="price_high">Price High → Low</option>
+        </select>
+
+        <input
+          type="number"
+          placeholder="Min Price"
+          value={minPrice}
+          onChange={(e) => setMinPrice(e.target.value)}
+          className="px-4 py-2 border rounded-lg w-32"
+        />
+
+        <input
+          type="number"
+          placeholder="Max Price"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
+          className="px-4 py-2 border rounded-lg w-32"
+        />
+
+        <button
+          onClick={() => {
+            setAppliedSort(sort);
+            setAppliedMinPrice(minPrice);
+            setAppliedMaxPrice(maxPrice);
+            setPage(1);
+          }}
+          className="bg-blue-800 text-white px-6 py-2 rounded-lg"
+        >
+          Apply
+        </button>
+
+      </div>
+
+
+      {/* PRODUCTS GRID */}
       <div className="p-10 grid grid-cols-4 gap-8">
         {products.map((product) => (
           <div
@@ -123,7 +185,11 @@ export default function ProductsPage() {
             className="bg-white rounded-2xl shadow-lg p-5 hover:shadow-xl transition"
           >
             <img
-              src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.image}`}
+              src={
+                product.image.startsWith("http")
+                  ? product.image
+                  : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.image}`
+              }
               alt={product.name}
               className="w-full h-40 object-cover rounded-lg mb-4"
             />

@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { registerApi } from "@/api/authApi";
 import { RegisterForm } from "@/types/auth"
-
+import toast from "react-hot-toast";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -27,12 +27,12 @@ export default function RegisterPage() {
 
     try {
       await registerApi(form);
-      alert("Registration Successful");
+      toast.success("Registration Successful");
       router.push("/login");
 
     } catch (error) {
       console.error(error);
-      alert("Registration Failed");
+      toast.error("Registration Failed");
     }
   };
 
