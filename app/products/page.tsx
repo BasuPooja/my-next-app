@@ -185,7 +185,11 @@ export default function ProductsPage() {
             className="bg-white rounded-2xl shadow-lg p-5 hover:shadow-xl transition"
           >
             <img
-              src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.image}`}
+              src={
+                product.image.startsWith("http")
+                  ? product.image
+                  : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.image}`
+              }
               alt={product.name}
               className="w-full h-40 object-cover rounded-lg mb-4"
             />
