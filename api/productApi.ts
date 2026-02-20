@@ -45,4 +45,12 @@ export const getProductList = (
   });
 };
 
+export const bulkDeleteProducts = (ids: number[]) => {
+  return baseApi("/products/bulk-delete", {
+    method: "DELETE",
+    auth: true,
+    body: JSON.stringify({ ids }),
+  });
+};
+
 
