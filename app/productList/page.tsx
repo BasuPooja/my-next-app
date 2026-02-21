@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getProductList } from "@/api/productApi";
+import { getProductList, exportProducts } from "@/api/productApi";
 import { baseApi } from "@/api/baseApi";
 import { Product } from "@/types/product";
 import toast from "react-hot-toast";
@@ -29,6 +29,8 @@ export default function ProductListPage() {
   const [editModal, setEditModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
+  const [exportType, setExportType] = useState<"all" | "page" | "selected">("all");
+  
   const fetchProducts = async () => {
     setLoading(true);
 
@@ -36,12 +38,12 @@ export default function ProductListPage() {
       const data = await getProductList(page,  appliedSearch, sortField, sortDirection);
       setProducts(data.data);
       setLastPage(data.last_page);
-    } catch (error) {
-      toast.error("Failed to fetch products");
-    } finally {
-      setLoading(false);
-    }
-  };
+      } catch (error) {
+        toast.error("Failed to fetch products");
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
     fetchProducts();
@@ -152,31 +154,121 @@ export default function ProductListPage() {
         formData.append("image", selectedImage);
       }
 
-      // await fetch(
-      //   `${process.env.NEXT_PUBLIC_API_URL}/products/${selectedProduct.id}`,
-      //   {
-      //     method: "POST", // Laravel PUT with formData needs POST + _method
-      //     headers: {
-      //       Authorization: `Bearer ${localStorage.getItem("token")}`,
-      //     },
-      //     body: formData,
-      //   }
-      // );
+    // ---------------- Export ----------------
+    const handleExport = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/products/export`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
 
-      await baseApi(`/products/${selectedProduct.id}`, {
-        method: "POST",
-        body: formData,
-        auth: true,
-      });
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
 
-      Swal.fire("Success!", "Product Updated", "success");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "products.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
 
-      setEditModal(false);
-      setShowModal(false);
-      setSelectedImage(null);
-      fetchProducts();
+      } catch (error) {
+        console.error("Export failed:", error);
+      }
+    };
+
+    await baseApi(`/products/${selectedProduct.id}`, {
+      method: "POST",
+      body: formData,
+      auth: true,
+    });
+
+    Swal.fire("Success!", "Product Updated", "success");
+
+    setEditModal(false);
+    setShowModal(false);
+    setSelectedImage(null);
+    fetchProducts();
     } catch {
       Swal.fire("Error!", "Update failed", "error");
+    }
+  };
+
+  // ---------------- EXPORT ----------------
+  // const handleExport = async (
+  //   type: "all" | "selected" | "page" | "filtered"
+  // ) => {
+  //   try {
+  //     let params: any = {};
+
+  //     // 🔹 Export Selected Rows
+  //     if (type === "selected" && selectedIds.length > 0) {
+  //       params.ids = selectedIds;
+  //     }
+
+  //     // 🔹 Export Current Page
+  //     if (type === "page") {
+  //       params.page = currentPage;
+  //     }
+
+  //     // 🔹 Export Filtered Data
+  //     if (type === "filtered" && search) {
+  //       params.search = search;
+  //     }
+
+  //     const blob = await exportProducts(params);
+
+  //     const url = window.URL.createObjectURL(blob);
+  //     const a = document.createElement("a");
+  //     a.href = url;
+  //     a.download = "products.csv";
+  //     document.body.appendChild(a);
+  //     a.click();
+  //     a.remove();
+  //   } catch (error) {
+  //     console.error("Export failed:", error);
+  //   }
+  // };
+  const handleExport = async () => {
+    try {
+      
+      if (exportType === "selected" && selected.length === 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "No Product Selected",
+        text: "Please select at least one product to export.",
+      });
+      return;
+    }
+
+    let params: any = {};
+
+    if (exportType === "selected") {
+      params.ids = selected;
+    }
+
+      if (exportType === "page") {
+        params.page = page;
+      }
+
+      const blob = await exportProducts(params);
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "products.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      Swal.fire("Success!", "CSV Exported Successfully", "success");
+
+    } catch (error) {
+      Swal.fire("Error!", "Export Failed", "error");
     }
   };
 
@@ -198,18 +290,35 @@ export default function ProductListPage() {
         </h1>
 
         <div className="flex gap-3">
+
+          <div className="flex gap-3 items-center">
+
+            <select
+              value={exportType}
+              onChange={(e) =>
+                setExportType(e.target.value as "all" | "page" | "selected")
+              }
+              className="border px-3 py-2 rounded-lg"
+            >
+              <option value="all">All</option>
+              <option value="page">Current Page</option>
+              <option value="selected">Selected</option>
+            </select>
+
+            <button
+              onClick={handleExport}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg"
+            >
+              Export
+            </button>
+
+          </div>
+          
           <button
             onClick={() => router.push("/products/import")}
             className="bg-purple-600 text-white px-4 py-2 rounded-lg"
           >
             Import
-          </button>
-
-          <button
-            onClick={() => router.push("/products/export")}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg"
-          >
-            Export
           </button>
 
           <button

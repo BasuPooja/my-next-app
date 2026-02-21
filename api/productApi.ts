@@ -53,4 +53,38 @@ export const bulkDeleteProducts = (ids: number[]) => {
   });
 };
 
+export const exportProducts = async (params?: {
+  search?: string;
+  ids?: number[];
+  page?: number;
+}): Promise<Blob> => {
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const query = new URLSearchParams();
+
+  if (params?.search) query.append("search", params.search);
+
+  if (params?.ids && params.ids.length > 0) {
+    params.ids.forEach((id) => query.append("ids[]", id.toString()));
+  }
+
+  if (params?.page) query.append("page", params.page.toString());
+
+  const response = await fetch(
+    `${BASE_URL}/products/export?${query.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Accept: "text/csv",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to export products");
+  }
+
+  return response.blob();
+};
 
