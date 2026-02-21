@@ -6,6 +6,7 @@ import { getProductList } from "@/api/productApi";
 import { baseApi } from "@/api/baseApi";
 import { Product } from "@/types/product";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 export default function ProductListPage() {
   const router = useRouter();
@@ -22,6 +23,11 @@ export default function ProductListPage() {
 
   const [sortField, setSortField] = useState("id");
   const [sortDirection, setSortDirection] = useState("desc");
+
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -60,7 +66,17 @@ export default function ProductListPage() {
 
   //------------------------------- Single delete ------------------------
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this product?")) return;
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This product will be deleted!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await baseApi(`/products/${id}`, {
@@ -68,34 +84,99 @@ export default function ProductListPage() {
         auth: true,
       });
 
-      toast.success("Deleted");
+      Swal.fire("Deleted!", "Product has been deleted.", "success");
       fetchProducts();
     } catch {
-      toast.error("Delete failed");
+      Swal.fire("Error!", "Delete failed.", "error");
     }
   };
 
-  // -------------------------------  Bulk delete ------------------------------- 
-  const handleBulkDelete = async () => {
-    if (selected.length === 0) return;
+    // -------------------------------  Bulk delete ------------------------------- 
+    const handleBulkDelete = async () => {
+      if (selected.length === 0) return;
 
-    if (!confirm("Delete selected products?")) return;
+      const result = await Swal.fire({
+        title: "Delete selected products?",
+        text: `You are deleting ${selected.length} products.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete!",
+      });
 
+      if (!result.isConfirmed) return;
+
+      try {
+        await Promise.all(
+          selected.map((id) =>
+            baseApi(`/products/${id}`, {
+              method: "DELETE",
+              auth: true,
+            })
+          )
+        );
+
+        Swal.fire("Deleted!", "Bulk delete successful.", "success");
+        setSelected([]);
+        fetchProducts();
+      } catch {
+        Swal.fire("Error!", "Bulk delete failed.", "error");
+      }
+    };
+
+    // ---------------- SHOW ----------------
+  const handleShow = (product: Product) => {
+    setSelectedProduct(product);
+    setShowModal(true);
+  };
+
+  // ---------------- EDIT ----------------
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setSelectedImage(null);
+    setEditModal(true);
+  };
+
+  // ---------------- UPDATE ----------------
+  const handleUpdate = async () => {
     try {
-      await Promise.all(
-        selected.map((id) =>
-          baseApi(`/products/${id}`, {
-            method: "DELETE",
-            auth: true,
-          })
-        )
-      );
+      const formData = new FormData();
+      
+      formData.append("_method", "PUT");
+      formData.append("name", selectedProduct.name);
+      formData.append("price", selectedProduct.price);
+      formData.append("description", selectedProduct.description);
 
-      toast.success("Bulk delete successful");
-      setSelected([]);
+      if (selectedImage) {
+        formData.append("image", selectedImage);
+      }
+
+      // await fetch(
+      //   `${process.env.NEXT_PUBLIC_API_URL}/products/${selectedProduct.id}`,
+      //   {
+      //     method: "POST", // Laravel PUT with formData needs POST + _method
+      //     headers: {
+      //       Authorization: `Bearer ${localStorage.getItem("token")}`,
+      //     },
+      //     body: formData,
+      //   }
+      // );
+
+      await baseApi(`/products/${selectedProduct.id}`, {
+        method: "POST",
+        body: formData,
+        auth: true,
+      });
+
+      Swal.fire("Success!", "Product Updated", "success");
+
+      setEditModal(false);
+      setShowModal(false);
+      setSelectedImage(null);
       fetchProducts();
     } catch {
-      toast.error("Bulk delete failed");
+      Swal.fire("Error!", "Update failed", "error");
     }
   };
 
@@ -249,16 +330,14 @@ export default function ProductListPage() {
 
                 <td className="p-4 flex gap-4 justify-center">
                   <button
-                    onClick={() => router.push(`/products/${product.id}`)}
+                    onClick={() => handleShow(product)}
                     className="text-blue-600 hover:underline"
                   >
                     Show
                   </button>
 
                   <button
-                    onClick={() =>
-                      router.push(`/products/edit/${product.id}`)
-                    }
+                    onClick={() => handleEdit(product)}
                     className="text-indigo-600 hover:underline"
                   >
                     Edit
@@ -318,8 +397,120 @@ export default function ProductListPage() {
         </button>
 
       </div>
+      {/* SHOW MODAL */}
+      {showModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-xl w-96">
+            <h2 className="text-xl font-bold mb-4">Product Details</h2>
 
+            <img
+              src={
+                selectedProduct.image?.startsWith("http")
+                  ? selectedProduct.image
+                  : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedProduct.image}`
+              }
+              className="w-24 h-24 rounded-lg object-cover mb-3"
+            />
 
+            <p><strong>ID:</strong> {selectedProduct.id}</p>
+            <p><strong>Name:</strong> {selectedProduct.name}</p>
+            <p><strong>Price:</strong> ₹ {selectedProduct.price}</p>
+            <p><strong>Description:</strong> {selectedProduct.description}</p>
+
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  handleEdit(selectedProduct);
+                }}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg"
+              >
+                Edit
+              </button>
+
+              <button
+                onClick={() => setShowModal(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MODAL */}
+      {editModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-xl w-96">
+            <h2 className="text-xl font-bold mb-4">Edit Product</h2>
+
+            <input
+              type="text"
+              value={selectedProduct.name}
+              onChange={(e) =>
+                setSelectedProduct({ ...selectedProduct, name: e.target.value })
+              }
+              className="border p-2 w-full mb-3 rounded"
+            />
+
+            <input
+              type="number"
+              value={selectedProduct.price}
+              onChange={(e) =>
+                setSelectedProduct({ ...selectedProduct, price: e.target.value })
+              }
+              className="border p-2 w-full mb-3 rounded"
+            />
+            <img
+              src={
+                selectedImage
+                  ? URL.createObjectURL(selectedImage)
+                  : selectedProduct.image.startsWith("http")
+                  ? selectedProduct.image
+                  : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedProduct.image}`
+              }
+              className="w-24 h-24 rounded-lg object-cover mb-3"
+            />
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) =>
+                setSelectedImage(e.target.files ? e.target.files[0] : null)
+              }
+              className="mb-3"
+            />
+
+            <textarea
+              value={selectedProduct.description}
+              onChange={(e) =>
+                setSelectedProduct({
+                  ...selectedProduct,
+                  description: e.target.value,
+                })
+              }
+              className="border p-2 w-full mb-3 rounded"
+            />
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={handleUpdate}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg"
+              >
+                Update
+              </button>
+
+              <button
+                onClick={() => setEditModal(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

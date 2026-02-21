@@ -9,7 +9,6 @@ export const baseApi = async (
   options: RequestOptions = {}
 ) => {
   const headers: any = {
-    "Content-Type": "application/json",
     Accept: "application/json",
     ...(options.headers || {}),
   };
@@ -20,6 +19,10 @@ export const baseApi = async (
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
+  }
+
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
   }
 
   try {
@@ -38,6 +41,10 @@ export const baseApi = async (
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       throw new Error(errorData?.message || "Something went wrong");
+    }
+
+    if (response.status === 204) {
+      return true;
     }
 
     return response.json();
