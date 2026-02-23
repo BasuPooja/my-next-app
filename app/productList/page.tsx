@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getProductList, exportProducts } from "@/api/productApi";
+import { getProductList, exportProducts, importProducts } from "@/api/productApi";
 import { baseApi } from "@/api/baseApi";
 import { Product } from "@/types/product";
 import toast from "react-hot-toast";
@@ -30,6 +30,9 @@ export default function ProductListPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const [exportType, setExportType] = useState<"all" | "page" | "selected">("all");
+
+  const [importModal, setImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
   
   const fetchProducts = async () => {
     setLoading(true);
@@ -154,33 +157,6 @@ export default function ProductListPage() {
         formData.append("image", selectedImage);
       }
 
-    // ---------------- Export ----------------
-    const handleExport = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/export`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "products.csv";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-      } catch (error) {
-        console.error("Export failed:", error);
-      }
-    };
-
     await baseApi(`/products/${selectedProduct.id}`, {
       method: "POST",
       body: formData,
@@ -199,40 +175,6 @@ export default function ProductListPage() {
   };
 
   // ---------------- EXPORT ----------------
-  // const handleExport = async (
-  //   type: "all" | "selected" | "page" | "filtered"
-  // ) => {
-  //   try {
-  //     let params: any = {};
-
-  //     // 🔹 Export Selected Rows
-  //     if (type === "selected" && selectedIds.length > 0) {
-  //       params.ids = selectedIds;
-  //     }
-
-  //     // 🔹 Export Current Page
-  //     if (type === "page") {
-  //       params.page = currentPage;
-  //     }
-
-  //     // 🔹 Export Filtered Data
-  //     if (type === "filtered" && search) {
-  //       params.search = search;
-  //     }
-
-  //     const blob = await exportProducts(params);
-
-  //     const url = window.URL.createObjectURL(blob);
-  //     const a = document.createElement("a");
-  //     a.href = url;
-  //     a.download = "products.csv";
-  //     document.body.appendChild(a);
-  //     a.click();
-  //     a.remove();
-  //   } catch (error) {
-  //     console.error("Export failed:", error);
-  //   }
-  // };
   const handleExport = async () => {
     try {
       
@@ -271,6 +213,27 @@ export default function ProductListPage() {
       Swal.fire("Error!", "Export Failed", "error");
     }
   };
+
+  // ---------------- IMPORT ----------------
+  const handleImport = async () => {
+  if (!importFile) {
+    Swal.fire("Warning", "Please select a CSV file", "warning");
+    return;
+  }
+
+  try {
+    await importProducts(importFile);
+
+    Swal.fire("Success!", "Products Imported Successfully", "success");
+
+    setImportModal(false);
+    setImportFile(null);
+    fetchProducts();
+
+  } catch (error: any) {
+    Swal.fire("Error!", error.message || "Import failed", "error");
+  }
+};
 
   if (loading) {
     return (
@@ -315,14 +278,14 @@ export default function ProductListPage() {
           </div>
           
           <button
-            onClick={() => router.push("/products/import")}
+            onClick={() => setImportModal(true)}
             className="bg-purple-600 text-white px-4 py-2 rounded-lg"
           >
             Import
           </button>
 
           <button
-            onClick={() => router.push("/products/create")}
+            onClick={() => setImportModal(true)}
             className="bg-blue-800 text-white px-4 py-2 rounded-lg"
           >
             + Add Product
@@ -612,6 +575,43 @@ export default function ProductListPage() {
 
               <button
                 onClick={() => setEditModal(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* IMPORT MODAL */}
+      {importModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-xl w-96">
+            <h2 className="text-xl font-bold mb-4">Import CSV</h2>
+
+            <input
+              type="file"
+              accept=".csv"
+              onChange={(e) =>
+                setImportFile(e.target.files ? e.target.files[0] : null)
+              }
+              className="mb-4"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleImport}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg"
+              >
+                Import
+              </button>
+
+              <button
+                onClick={() => {
+                  setImportModal(false);
+                  setImportFile(null);
+                }}
                 className="bg-gray-500 text-white px-4 py-2 rounded-lg"
               >
                 Cancel

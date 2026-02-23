@@ -88,3 +88,14 @@ export const exportProducts = async (params?: {
   return response.blob();
 };
 
+export const importProducts = (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return baseApi("/products/import", {
+    method: "POST",
+    auth: true,
+    body: formData,
+  });
+};
+
