@@ -189,6 +189,10 @@ export default function ProductListPage() {
 
     let params: any = {};
 
+    if (appliedSearch) {
+      params.search = appliedSearch;
+    }
+
     if (exportType === "selected") {
       params.ids = selected;
     }
@@ -202,12 +206,12 @@ export default function ProductListPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "products.csv";
+      a.download = "products.xlsx";
       document.body.appendChild(a);
       a.click();
       a.remove();
 
-      Swal.fire("Success!", "CSV Exported Successfully", "success");
+      Swal.fire("Success!", "Product Exported Successfully", "success");
 
     } catch (error) {
       Swal.fire("Error!", "Export Failed", "error");
@@ -216,24 +220,24 @@ export default function ProductListPage() {
 
   // ---------------- IMPORT ----------------
   const handleImport = async () => {
-  if (!importFile) {
-    Swal.fire("Warning", "Please select a CSV file", "warning");
-    return;
-  }
+    if (!importFile) {
+      Swal.fire("Warning", "Please select a CSV file", "warning");
+      return;
+    }
 
-  try {
-    await importProducts(importFile);
+    try {
+      await importProducts(importFile);
 
-    Swal.fire("Success!", "Products Imported Successfully", "success");
+      Swal.fire("Success!", "Products Imported Successfully", "success");
 
-    setImportModal(false);
-    setImportFile(null);
-    fetchProducts();
+      setImportModal(false);
+      setImportFile(null);
+      fetchProducts();
 
-  } catch (error: any) {
-    Swal.fire("Error!", error.message || "Import failed", "error");
-  }
-};
+    } catch (error: any) {
+      Swal.fire("Error!", error.message || "Import failed", "error");
+    }
+  };
 
   if (loading) {
     return (

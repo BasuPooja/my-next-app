@@ -76,7 +76,6 @@ export const exportProducts = async (params?: {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
-        Accept: "text/csv",
       },
     }
   );
