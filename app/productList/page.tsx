@@ -388,9 +388,11 @@ export default function ProductListPage() {
                 <td className="p-4">
                   <img
                     src={
-                      product.image.startsWith("http")
-                        ? product.image
-                        : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.image}`
+                      product.image
+                        ? product.image.startsWith("http")
+                          ? product.image
+                          : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.image}`
+                        : "/no-image.png"
                     }
                     className="w-14 h-14 rounded-lg object-cover"
                   />
@@ -481,10 +483,11 @@ export default function ProductListPage() {
 
             <img
               src={
-                selectedProduct.image?.startsWith("http")
-                  ? selectedProduct.image
-                  : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedProduct.image}`
-              }
+                selectedProduct.image
+                  ? selectedProduct.image.startsWith("http")
+                    ? selectedProduct.image
+                    : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedProduct.image}`
+                  : "/no-image.png"              }
               className="w-24 h-24 rounded-lg object-cover mb-3"
             />
 
@@ -540,11 +543,11 @@ export default function ProductListPage() {
             />
             <img
               src={
-                selectedImage
-                  ? URL.createObjectURL(selectedImage)
-                  : selectedProduct.image.startsWith("http")
+                selectedProduct.image
+                ? selectedProduct.image.startsWith("http")
                   ? selectedProduct.image
                   : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedProduct.image}`
+                : "/no-image.png"
               }
               className="w-24 h-24 rounded-lg object-cover mb-3"
             />
@@ -596,7 +599,7 @@ export default function ProductListPage() {
 
             <input
               type="file"
-              accept=".csv"
+              accept=".csv,.xlsx,.xls"
               onChange={(e) =>
                 setImportFile(e.target.files ? e.target.files[0] : null)
               }
